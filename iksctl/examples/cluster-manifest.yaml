@@ -1,0 +1,116 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: my-cluster
+  namespace: default
+spec:
+  clusterNetwork:
+    cniConfig:
+      cilium: {}
+    pods:
+      cidrBlocks:
+        - 10.128.0.0/18
+    services:
+      cidrBlocks:
+        - 10.128.32.0/18
+  datacenterRef:
+    kind: NutanixDatacenterConfig
+    name: my-cluster
+  eksaVersion: v0.22.1
+  gitOpsRef:
+    kind: FluxConfig
+    name: my-cluster
+  kubernetesVersion: "1.30"
+  controlPlaneConfiguration:
+    apiServerExtraArgs:
+      feature-gates: "ClusterTrustBundle=true,ClusterTrustBundleProjection=true"
+      runtime-config: "certificates.k8s.io/v1alpha1=true"
+    kubeletConfiguration:
+      kind: KubeletConfiguration
+      featureGates:
+        ClusterTrustBundle: true
+        ClusterTrustBundleProjection: true
+    count: 3
+    endpoint:
+      host: 172.21.152.236
+    machineGroupRef:
+      kind: NutanixMachineConfig
+      name: my-cluster-cp
+  workerNodeGroupConfigurations:
+    - count: 1
+      machineGroupRef:
+        kind: NutanixMachineConfig
+        name: my-cluster-worker
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: NutanixDatacenterConfig
+metadata:
+  name: my-cluster
+  namespace: default
+spec:
+  credentialRef:
+    kind: Secret
+    name: nutanix-credentials
+  endpoint: projectcloud.systematicgroup.local
+  port: 9440
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: NutanixMachineConfig
+metadata:
+  name: my-cluster-cp
+  namespace: default
+spec:
+  vcpusPerSocket: 2
+  vcpuSockets: 2
+  memorySize: 8Gi
+  osFamily: ubuntu
+  image:
+    type: "name"
+    name: "IKS_2024.0.1_EKSA_v0.20.11_BUILD_202505251644_KUBE_1-30"
+  cluster:
+    type: "name"
+    name: "DC2-NTXC03"
+  subnet:
+    type: "name"
+    name: "VLAN2005-iks-sourcegraph"
+  project:
+    type: "name"
+    name: "21009-06-08-07 ITM IKS"
+  systemDiskSize: 50Gi
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: NutanixMachineConfig
+metadata:
+  name: my-cluster-worker
+  namespace: default
+spec:
+  vcpusPerSocket: 8
+  vcpuSockets: 2
+  memorySize: 16Gi
+  osFamily: ubuntu
+  image:
+    type: "name"
+    name: "IKS_2024.0.1_EKSA_v0.20.11_BUILD_202505251644_KUBE_1-30"
+  cluster:
+    type: "name"
+    name: "DC2-NTXC03"
+  subnet:
+    type: "name"
+    name: "VLAN2005-iks-sourcegraph"
+  project:
+    type: "name"
+    name: "21009-06-08-07 ITM IKS"
+  systemDiskSize: 100Gi
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: FluxConfig
+metadata:
+  name: my-cluster
+  namespace: default
+spec:
+  branch: main
+  clusterConfigPath: clusters/my-cluster
+  git:
+    repositoryUrl: ssh://git@bitbucket:7999/itmiksss/my-cluster.git
+    sshKeyAlgorithm: ecdsa
+  systemNamespace: flux-system

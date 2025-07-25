@@ -1,0 +1,39 @@
+apiVersion: iksctl.kubematic.io/v1alpha1
+kind: AirgapConfig
+ociRepo:
+  host: iks-harbor-base.systematicgroup.local
+  repository: iks-library
+  pwdbCredentialID: 23114
+charts:
+  - repo: "https://kubernetes.github.io/ingress-nginx"
+    name: "ingress-nginx"
+    version: "4.10.1"
+    values:
+      controller:
+        extraArgs:
+          update-status: "true"
+  - repo: "https://bitnami-labs.github.io/sealed-secrets"
+    name: "sealed-secrets"
+    version: "2.16.1"
+  - repo: "https://charts.jetstack.io"
+    name: "cert-manager"
+    version: "v1.6.0"
+  - repo: "https://metallb.github.io/metallb"
+    name: "metallb"
+    version: "0.14.8"
+  - repo: "https://projectsveltos.github.io/helm-charts"
+    name: "projectsveltos"
+    version: "0.51.1"
+    extraImages:
+      - projectsveltos/drift-detection-manager:v0.51.1
+      - projectsveltos/sveltos-agent:v0.51.1
+  - repo: "https://vmware-tanzu.github.io/helm-charts"
+    name: "velero"
+    version: "8.4.0"
+    values:
+      initContainers:
+        - name: velero-plugin-for-microsoft-azure
+          image: velero/velero-plugin-for-microsoft-azure:v1.11.0
+  - repo: "https://dell.github.io/helm-charts"
+    name: "csi-powerstore"
+    version: "2.11.0"

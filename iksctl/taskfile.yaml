@@ -1,0 +1,33 @@
+version: "3"
+
+includes:
+  tools:
+    taskfile: ./tools/taskfile.yaml
+    dir: ./tools
+
+tasks:
+  build:
+    desc: "🔨 Build iksctl binary"
+    deps: [controller-gen]
+    sources:
+      - "**/*.go"
+    generates:
+      - "bin/iksctl"
+    cmds:
+      - go build -o ./bin/iksctl ./cmd/iksctl
+
+  lint:
+    desc: "🚨 Run linting"
+    deps: [tools:golangci-lint]
+    cmds:
+      - ./tools/bin/golangci-lint run -v --timeout 10m --fix
+
+  controller-gen:
+    desc: "🪄 Run runtime.Object implementaion generation"
+    deps: [tools:controller-gen]
+    sources:
+      - pkg/api/**/*.go
+    generates:
+      - pkg/api/**/zz_generated.deepcopy.go
+    cmds:
+      - ./tools/bin/controller-gen object paths="./pkg/api/..."
